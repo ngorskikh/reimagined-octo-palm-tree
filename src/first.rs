@@ -1,7 +1,7 @@
-type Link<T> = Option<Box<Node<T>>>;
+type Link<T> = Option<Box<Node<T>>>; // Box<> is like unique_ptr<>
 
 pub struct List<T> {
-    head: Link<T>,
+    head: Link<T>, // Optional pointer on the stack, actual nodes on the heap
 }
 
 struct Node<T> {
@@ -181,6 +181,7 @@ mod test {
         let mut i = 3;
         for e in &l {
             assert_eq!(&i, e);
+//            *e = 42; // No mutation: & is immutable reference
             i -= 1;
         }
         // Can continue using l since it was borrowed to the loop, not moved into it
@@ -202,7 +203,6 @@ mod test {
             *e = i * 10; // Mutation, yay...
             i -= 1;
         }
-        // Can continue using l since it was borrowed to the loop, not moved into it
         assert_eq!(Some(30), l.pop());
         assert_eq!(Some(20), l.pop());
         assert_eq!(Some(10), l.pop());
