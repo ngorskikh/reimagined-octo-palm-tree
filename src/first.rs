@@ -97,6 +97,30 @@ impl<'a, T> Iterator for ListIter<'a, T> {
     }
 }
 
+pub struct ListIterMut<'a, T> {
+    next: Option<&'a mut Node<T>>,
+}
+
+impl<'a, T> IntoIterator for &'a mut List<T> {
+    type Item = &'a mut T;
+    type IntoIter = ListIterMut<'a, T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        ListIterMut {next: self.head.as_mut().map(|h| { h.as_mut() })}
+    }
+}
+
+impl<'a, T> Iterator for ListIterMut<'a, T> {
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|node| {
+            self.next = node.next.as_mut().map(|node| node.as_mut());
+            &mut node.elem
+        })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::List;
@@ -163,6 +187,25 @@ mod test {
         assert_eq!(Some(3), l.pop());
         assert_eq!(Some(2), l.pop());
         assert_eq!(Some(1), l.pop());
+        assert_eq!(None, l.pop());
+    }
+
+    #[test]
+    fn into_iter_mut() {
+        let mut l = List::new();
+        l.push(1);
+        l.push(2);
+        l.push(3);
+        let mut i = 3;
+        for e in &mut l {
+            assert_eq!(&i, e);
+            *e = i * 10; // Mutation, yay...
+            i -= 1;
+        }
+        // Can continue using l since it was borrowed to the loop, not moved into it
+        assert_eq!(Some(30), l.pop());
+        assert_eq!(Some(20), l.pop());
+        assert_eq!(Some(10), l.pop());
         assert_eq!(None, l.pop());
     }
 }
